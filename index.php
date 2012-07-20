@@ -16,6 +16,8 @@
 		</div>
 		<a href="#"><pre>window.t1 = timer(function() { console.log('t1 in 3 seconds') }).timeout(3000);</pre></a>
 		<a href="#"><pre>window.t1 = timer(function() { console.log('t1 in 3 seconds') }).interval(3000);</pre></a>
+		<a href="#"><pre>t1.reset();</pre></a>
+		<a href="#"><pre>t1.now();</pre></a>
 		<a href="#"><pre>t1.pause();</pre></a>
 		<a href="#"><pre>t1.resume();</pre></a>
 		

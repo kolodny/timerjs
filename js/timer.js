@@ -1,14 +1,16 @@
 (function() {
+	var allTimers = [];
 	var timer = function(func, d) {
-		var timerId, start, end, _type, timeLeft = 0, delay, resumed, _finished;
+		var timerId, end, _type, timeLeft = 0, delay, resumed, _finished;
 		
-		return {
+		debugger
+		
+		var ret = {
 			timeout: function(_delay) {
 				delay = _delay || d;
 				
 				_finished = false;
-				start = new Date();
-				end = +start + delay;
+				end = now() + delay;
 				_type = 'timeout';
 				
 				timerId = setTimeout(function() {
@@ -22,8 +24,7 @@
 				delay = _delay || d;
 				
 				_finished = false;
-				start = new Date();
-				end = +start + delay;
+				end = now() + delay;
 				_type = 'interval';
 				
 				timerId = setInterval(func, delay);
@@ -47,8 +48,7 @@
 							timerId = 0;
 							_finished = true;
 						}, timeLeft);
-						start = new Date();
-						end = +start + timeLeft;
+						end = now() + timeLeft;
 					} else {
 						timerId = setTimeout(function() {
 							func();
@@ -56,8 +56,7 @@
 							_type = 'interval';
 						}, timeLeft);
 						_type = 'intervalFragment';
-						start = new Date();
-						end = +start + timeLeft;
+						end = now() + timeLeft;
 					}				}
 				return this;
 			},
@@ -70,6 +69,45 @@
 //				}
 //				return this;
 //			},
+			now: function(randomly) {
+				if (randomly) {
+					func();
+				} else if (!timerId && timeLeft) {
+					// paused
+					func();
+					timeLeft = _type === 'timeout' ? 0 : delay;
+				} else if (timerId) {
+					// running
+					func();
+					(_type === 'interval' ? clearInterval : clearTimeout)(timerId);
+					if (_type !== 'timeout') {
+						timerId = setInterval(func, delay);
+						end = now() + delay;
+					} else {
+						_finished = true;
+						timerId = 0;
+					}
+				} else {
+					// it's already finished
+				}
+				return this;
+			},
+			reset: function() {
+				if (this.isFinished())
+					return this;
+				
+				var wasPaused = this.isPaused();
+				
+				this.pause();
+				timeLeft = delay;
+				if (wasPaused)
+					this.resume();
+				
+				return this;
+			},
+			stop: function() {
+				this.pause().reset();
+			},
 			remaining: function() {
 				return (timerId) ?
 					(end - new Date() % delay + delay)  % delay :
@@ -88,7 +126,26 @@
 			isRunning: function() {return !!timerId;},
 			isPaused: function() {return !timerId && !!timeLeft;},
 			isFinished: function() {return !!_finished;}
-		}
+		};
+		
+		allTimers.push(ret);
+		return ret;
+		
+		function now() { return +new Date(); }
 	};
+	timer.all = {
+		pause: function() {
+			for (var i = 0; i < allTimers.length; i++)
+				allTimers[i].pause();
+		},
+		stop: function() {
+			for (var i = 0; i < allTimers.length; i++)
+				allTimers[i].stop();
+		},
+		reset: function() {
+			for (var i = 0; i < allTimers.length; i++)
+				allTimers[i].reset();
+		}
+	}
 	window.timer = timer;
 })();
